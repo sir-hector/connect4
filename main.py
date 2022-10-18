@@ -1,15 +1,26 @@
 # Karol Kraus, Piotr Mastalerz - Connect 4
+from easyAI import TwoPlayerGame
 
 BOARD_COLS = 7
 BOARD_ROWS = 6
 
-class Board():
+class Board(TwoPlayerGame):
     def __init__(self):
         self.board = [[' ' for _ in range(BOARD_COLS)] for _ in range(BOARD_ROWS)]
         self.turns = 0
         self.last_move = [-1, -1] # row, col
 
+    def possible_moves(self):
+        return [i+1 for i in range(BOARD_COLS) if (self.board[0][i] == " ")]
+
+    def is_over(self):
+        return []
+
+    def make_move(self, move):
+        return []
+
     def print_board(self):
+        print(self.possible_moves())
         # Number the columns
         print("\n")
         for c in range(BOARD_COLS):
