@@ -1,115 +1,73 @@
-# Karol Kraus, Piotr Mastalerz - Connect 4
-from easyAI import TwoPlayerGame
+import numpy as np
+from easyAI import TwoPlayerGame, Human_Player, AI_Player, Negamax
 
-BOARD_COLS = 7
-BOARD_ROWS = 6
+class GameController(TwoPlayerGame):
+    def __init__(self, players, board = None):
+        # Define the players
+        self.players = players
 
-class Board(TwoPlayerGame):
-    def __init__(self):
-        self.board = [[' ' for _ in range(BOARD_COLS)] for _ in range(BOARD_ROWS)]
-        self.turns = 0
-        self.last_move = [-1, -1] # row, col
+        # Define the configuration of the board
+        self.board = board if (board != None) else (np.array([[0 for i in range(7)] for j in range(6)]))
 
+        # Define who starts the game
+        self.current_player = 1
+
+        # Define the positions
+        self.pos_dir = np.array ([[[i, 0], [0, 1]] for i in range(6)] +
+                                [[[0, i], [1, 0]] for i in range(7)] +
+                                [[[i, 0], [1, 1]] for i in range(1, 3)] +
+                                [[[0, i], [1, 1]] for i in range(4)] +
+                                [[[i, 6], [ 1, -1]] for i in range(1, 3)] +
+                                [[[0, i], [1, -1]] for i in range(3, 7)])
+
+     # Define possible moves
     def possible_moves(self):
-        return [i+1 for i in range(BOARD_COLS) if (self.board[0][i] == " ")]
+        return [i for i in range(7) if (self.board[:, i].min() == 0)]
 
-    def is_over(self):
-        return []
+    # Define how to make the move
+    def make_move(self, column):
+        line = np.argmin(self.board[:, column] != 0)
+        self.board[line, column] = self.current_player
 
-    def make_move(self, move):
-        return []
+    # Show current status
+    def show(self):
+        print("\n" + "\n".join(["0 1 2 3 4 5 6", 13 * "-"] +
+                                    [" ".join([[".", "O", "X"] [self.board[5 - j] [i]]
+                                    for i in range(7)]) for j in range(6)]))
 
-    def print_board(self):
-        print(self.possible_moves())
-        # Number the columns
-        print("\n")
-        for c in range(BOARD_COLS):
-            print(f" ({c + 1}) ", end="")
-        print("\n")
-
-        # Print the slots
-        for r in range(BOARD_ROWS):
-            print('|', end="")
-            for c in range(BOARD_COLS):
-                print(f"  {self.board[r][c]} |", end="")
-            print("\n")
-
-        print(f"{'-' * 35}\n")
-
-    def which_turn(self):
-        players = ['X', 'O']
-        return players[self.turns % 2]
-
-    def turn(self, column):
-        # Search from the bottom up
-        for r in range(BOARD_ROWS-1, -1, -1):
-            if self.board[r][column] == ' ':
-                self.board[r][column] = self.which_turn()
-                self.last_move = [r, column]
-
-                self.turns += 1
-                return True
+    # Define loss condition
+    def loss_condition(self):
+        for pos, direction in self.pos_dir:
+            streak = 0
+            while (0 <= pos[0] <= 5) and (0 <= pos[1] <= 6):
+                if self.board[pos[0], pos[1]] == self.opponent_index:
+                    streak += 1
+                    if streak == 4:
+                        return True
+                else:
+                    streak = 0
+                pos = pos + direction
         return False
 
-    def in_bounds(self, r, c):
-        return r >= 0 and r < BOARD_ROWS and c >= 0 and c < BOARD_COLS
+    # Check if game is over
+    def is_over(self):
+        return(self.board.min() > 0) or self.loss_condition()
 
-    def game_winner(self):
-        last_row = self.last_move[0]
-        last_col = self.last_move[1]
-        last_letter = self.board[last_row][last_col]
-
-        # [r.c] direction, matching letter count, locked bool
-        directions = [
-            [[-1, 0], 0, True],
-            [[1, 0], 0, True],
-            [[0, -1], 0, True],
-            [[0, 1], 0, True],
-            [[-1, -1], 0, True],
-            [[1, 1], 0, True],
-            [[-1, 1], 0, True],
-            [[1, -1], 0, True],
-        ]
-
-        # Search outwards looking for matching letters
-        for a in range(4):
-            for d in directions:
-                r = last_row + (d[0][0] * (a+1))
-                c = last_col + (d[0][1] * (a+1))
-                if d[2] and self.in_bounds(r,c) and self.board[r][c] == last_letter:
-                    d[1] += 1
-                else:
-                    # STOP searching in this direction
-                    d[2] = False
-
-        #Check possible direction pairs for '4 pieces in a row'
-        for i in range(0,7,2):
-            if(directions[i][1] + directions[i+1][1] >= 3):
-                self.print_board()
-                print(f"{last_letter} is the Winner")
-                return last_letter
-
-        # did not find a winner
-            return False
+    # Compute the score
+    def scoring(self):
+        return -100 if self.loss_condition() else 0
 
 
-def play():
-    game = Board()
+if __name__ == "__main__":
+    # Define the algorithms that will be used
+    algo_neg = Negamax(5)
 
-    game_over = False
-    while not game_over:
-        #continue playing
+    # Start the game
+    game = GameController([AI_Player(algo_neg), Human_Player()])
+    game.play()
 
-        game.print_board()
-        valid_move = False
-        while not valid_move:
-            user_move = input(f"{game.which_turn()}'s turn - please pick a column 1-7 ")
-            try:
-                valid_move = game.turn(int(user_move) - 1)
-            except:
-                print(f"Please choose a number betwwen 1 and {BOARD_COLS}")
-
-        game_over = game.game_winner()
-
-if __name__ == '__main__':
-    play()
+    # Print the result
+    if game.loss_condition():
+        print("\nPlayer", game.opponent_index, "wins. ")
+    else:
+        print("\nIt's a draw.")
