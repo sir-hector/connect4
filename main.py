@@ -3,9 +3,16 @@
 # Piotr Mastalerz s21911
 
 # game instructions https://en.wikipedia.org/wiki/Connect_Four
+
 # environmental instructions
 # create venv
 #   python3 -m venv venv
+# activate venv
+#   source venv/bin/activate
+# install packages
+#   pip3 install -r requirements.txt
+# run app
+#   python3 main.py
 
 import numpy as np
 from easyAI import TwoPlayerGame, Human_Player, AI_Player, Negamax
