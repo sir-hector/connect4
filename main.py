@@ -4,6 +4,8 @@
 
 # game instructions https://en.wikipedia.org/wiki/Connect_Four
 # environmental instructions
+# create venv
+#   python3 -m venv venv
 
 import numpy as np
 from easyAI import TwoPlayerGame, Human_Player, AI_Player, Negamax
