@@ -1,12 +1,23 @@
+# Authors:
+# Karol Kraus s20687
+# Piotr Mastalerz s21911
+
+# game instructions https://en.wikipedia.org/wiki/Connect_Four
+# environmental instructions
+
 import numpy as np
 from easyAI import TwoPlayerGame, Human_Player, AI_Player, Negamax
 
 class GameController(TwoPlayerGame):
     def __init__(self, players, board = None):
+
         # Define the players
         self.players = players
 
-        # Define the configuration of the board
+        # Define who starts the game
+        self.current_player = 1
+
+        # Define the playing board
         self.board = board if (board != None) else (np.array([[0 for i in range(7)] for j in range(6)]))
 
         # Define who starts the game
@@ -22,21 +33,48 @@ class GameController(TwoPlayerGame):
 
      # Define possible moves
     def possible_moves(self):
+        """
+        Return list of possible moves in each iteration
+
+        Returns:
+            list: list of possible moves(column numbers [0-6])
+        """
         return [i for i in range(7) if (self.board[:, i].min() == 0)]
 
     # Define how to make the move
     def make_move(self, column):
+        """
+        Save move of current player into the board, each move take always the lowest place(row) in column
+
+        Parameters:
+        column (int) : number of chosen column by player
+
+        Returns:
+            None
+        """
         line = np.argmin(self.board[:, column] != 0)
         self.board[line, column] = self.current_player
 
     # Show current status
     def show(self):
+        """
+        printing the board to the console
+
+        Returns:
+            None
+        """
         print("\n" + "\n".join(["0 1 2 3 4 5 6", 13 * "-"] +
                                     [" ".join([[".", "O", "X"] [self.board[5 - j] [i]]
                                     for i in range(7)]) for j in range(6)]))
 
     # Define loss condition
     def loss_condition(self):
+        """
+        Checking if the board have winning sequence
+
+        Returns:
+            boolean: true if board has winning sequence, false if not
+        """
         for pos, direction in self.pos_dir:
             streak = 0
             while (0 <= pos[0] <= 5) and (0 <= pos[1] <= 6):
@@ -51,15 +89,27 @@ class GameController(TwoPlayerGame):
 
     # Check if game is over
     def is_over(self):
+        """
+        checking if are any possible moves on the board or if the board has winning sequence
+
+        Returns:
+            boolean: true if game is over, false if not
+        """
         return(self.board.min() > 0) or self.loss_condition()
 
     # Compute the score
     def scoring(self):
+        """
+        gives a score to the current game (for the AI)
+
+        Returns:
+            int: score(-100 or 0)
+        """
         return -100 if self.loss_condition() else 0
 
 
 if __name__ == "__main__":
-    # Define the algorithms that will be used
+    # Define the algorithm that will be used
     algo_neg = Negamax(5)
 
     # Start the game
